@@ -1,0 +1,339 @@
+Cmp-Mod V01 Created by CvPcb (2013-02-14 BZR 3950)-testing date = Saturday, 2013 March 09 18:13:13
+
+BeginCmp
+TimeStamp = /51309B84;
+Reference = C1;
+ValeurCmp = C;
+IdModule  = SM0603_Capa;
+EndCmp
+
+BeginCmp
+TimeStamp = /51309A07;
+Reference = C2;
+ValeurCmp = C;
+IdModule  = SM0603_Capa;
+EndCmp
+
+BeginCmp
+TimeStamp = /51342CA8;
+Reference = C3;
+ValeurCmp = 18pF;
+IdModule  = SM0603_Capa;
+EndCmp
+
+BeginCmp
+TimeStamp = /513130AA;
+Reference = C4;
+ValeurCmp = C;
+IdModule  = SM0603_Capa;
+EndCmp
+
+BeginCmp
+TimeStamp = /5131317B;
+Reference = C5;
+ValeurCmp = C;
+IdModule  = SM0603_Capa;
+EndCmp
+
+BeginCmp
+TimeStamp = /5131303A;
+Reference = C6;
+ValeurCmp = C;
+IdModule  = SM0603_Capa;
+EndCmp
+
+BeginCmp
+TimeStamp = /51342CAE;
+Reference = C7;
+ValeurCmp = 18pF;
+IdModule  = SM0603_Capa;
+EndCmp
+
+BeginCmp
+TimeStamp = /5133F763;
+Reference = C8;
+ValeurCmp = C;
+IdModule  = SM0603_Capa;
+EndCmp
+
+BeginCmp
+TimeStamp = /5133F684;
+Reference = C9;
+ValeurCmp = CAPAPOL;
+IdModule  = C2V10;
+EndCmp
+
+BeginCmp
+TimeStamp = /5133F4BB;
+Reference = C10;
+ValeurCmp = CAPAPOL;
+IdModule  = C2V10;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130D5B1;
+Reference = CON1;
+ValeurCmp = AVR-ISP-6;
+IdModule  = atmel-AVR-ISP-6;
+EndCmp
+
+BeginCmp
+TimeStamp = /5133EF81;
+Reference = D1;
+ValeurCmp = BRIDGE;
+IdModule  = Bridge-rond;
+EndCmp
+
+BeginCmp
+TimeStamp = /51343549;
+Reference = D2;
+ValeurCmp = DIODE;
+IdModule  = diode-SMB;
+EndCmp
+
+BeginCmp
+TimeStamp = /513B3B51;
+Reference = D3;
+ValeurCmp = POWER_ON;
+IdModule  = led-CHIP-LED0805;
+EndCmp
+
+BeginCmp
+TimeStamp = /513B6B40;
+Reference = F1;
+ValeurCmp = 1206L;
+IdModule  = ptc-littlefuse-3425L;
+EndCmp
+
+BeginCmp
+TimeStamp = /51311C8C;
+Reference = IC1;
+ValeurCmp = ATMEGA8-AI;
+IdModule  = TQFP32;
+EndCmp
+
+BeginCmp
+TimeStamp = /513AF0EF;
+Reference = K2;
+ValeurCmp = MEDER_DIP051A7212;
+IdModule  = DIP-14_RELAY;
+EndCmp
+
+BeginCmp
+TimeStamp = /513B2414;
+Reference = K3;
+ValeurCmp = HALL;
+IdModule  = conn3_35;
+EndCmp
+
+BeginCmp
+TimeStamp = /5133E8CF;
+Reference = K6;
+ValeurCmp = VFD_2;
+IdModule  = conn3_35;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130BF59;
+Reference = P1;
+ValeurCmp = LED_BOTTOM;
+IdModule  = PIN_ARRAY_2X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130BF5F;
+Reference = P2;
+ValeurCmp = LED_MIDDLE;
+IdModule  = PIN_ARRAY_2X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130BF65;
+Reference = P3;
+ValeurCmp = LED_TOP;
+IdModule  = PIN_ARRAY_2X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130C2EC;
+Reference = P4;
+ValeurCmp = PROGRAM_BUTTON;
+IdModule  = PIN_ARRAY_2X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /513B43E4;
+Reference = P5;
+ValeurCmp = USB_UART;
+IdModule  = PIN_ARRAY-6X1;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130BB35;
+Reference = P6;
+ValeurCmp = up_button;
+IdModule  = conn35;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130BB81;
+Reference = P7;
+ValeurCmp = down_button;
+IdModule  = conn35;
+EndCmp
+
+BeginCmp
+TimeStamp = /5133E8E8;
+Reference = P9;
+ValeurCmp = VFD_1;
+IdModule  = conn35;
+EndCmp
+
+BeginCmp
+TimeStamp = /51343255;
+Reference = P10;
+ValeurCmp = 12AC;
+IdModule  = conn35;
+EndCmp
+
+BeginCmp
+TimeStamp = /51339DE3;
+Reference = P11;
+ValeurCmp = 240V;
+IdModule  = conn35;
+EndCmp
+
+BeginCmp
+TimeStamp = /513AF1C3;
+Reference = P12;
+ValeurCmp = MCU_MODE;
+IdModule  = conn35;
+EndCmp
+
+BeginCmp
+TimeStamp = /513B008B;
+Reference = P13;
+ValeurCmp = RLY_ON;
+IdModule  = connect-CLAMP-02;
+EndCmp
+
+BeginCmp
+TimeStamp = /51333CE2;
+Reference = Q3;
+ValeurCmp = MOSFET_N;
+IdModule  = SOT23GDS;
+EndCmp
+
+BeginCmp
+TimeStamp = /51309B78;
+Reference = R1;
+ValeurCmp = R;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130C031;
+Reference = R2;
+ValeurCmp = R;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130C037;
+Reference = R3;
+ValeurCmp = R;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /5133451C;
+Reference = R4;
+ValeurCmp = R;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /5133BD9A;
+Reference = R5;
+ValeurCmp = R;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130C03D;
+Reference = R6;
+ValeurCmp = R;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /513B3B5E;
+Reference = R7;
+ValeurCmp = 1k;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /5130BBA9;
+Reference = R10;
+ValeurCmp = R;
+IdModule  = SM0603;
+EndCmp
+
+BeginCmp
+TimeStamp = /513A5D07;
+Reference = RL1;
+ValeurCmp = 94.14.0;
+IdModule  = 94.14.0;
+EndCmp
+
+BeginCmp
+TimeStamp = /51309CBB;
+Reference = S1;
+ValeurCmp = DTSM-6;
+IdModule  = switch-tact-DTS-6;
+EndCmp
+
+BeginCmp
+TimeStamp = /51339DD6;
+Reference = S2;
+ValeurCmp = DPTT;
+IdModule  = ;
+EndCmp
+
+BeginCmp
+TimeStamp = /5133C669;
+Reference = T1;
+ValeurCmp = TRANSFO;
+IdModule  = ;
+EndCmp
+
+BeginCmp
+TimeStamp = /513449BE;
+Reference = U1;
+ValeurCmp = 7805;
+IdModule  = TO220;
+EndCmp
+
+BeginCmp
+TimeStamp = /5134450C;
+Reference = U2;
+ValeurCmp = OPTO-TRANSISTOR_4_PIN;
+IdModule  = optocoupler-2-DIL04;
+EndCmp
+
+BeginCmp
+TimeStamp = /51344519;
+Reference = U3;
+ValeurCmp = OPTO-TRANSISTOR_4_PIN;
+IdModule  = optocoupler-2-DIL04;
+EndCmp
+
+BeginCmp
+TimeStamp = /51342B56;
+Reference = X1;
+ValeurCmp = 16MHz;
+IdModule  = crystal-HC49/S;
+EndCmp
+
+EndListe

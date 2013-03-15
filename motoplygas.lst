@@ -1,0 +1,102 @@
+eeschema (2013-02-14 BZR 3950)-testing  >> Creation date: Saturday, 2013 March 09 16:32:25
+#Cmp ( order = Reference )
+| C1         C           ;             
+| C2         C           ;             
+| C3         18pF        ;             
+| C4         C           ;             
+| C5         C           ;             
+| C6         C           ;             
+| C7         18pF        ;             
+| C8         C           ;             
+| C9         CAPAPOL     ;             
+| C10        CAPAPOL     ;             
+| CON1       AVR-ISP-6   ; AVR-ISP-6   
+| D1         BRIDGE      ;             
+| D2         DIODE       ;             
+| D3         POWER_ON    ;             
+| IC1        ATMEGA8-AI  ; TQFP32      
+| K2         MEDER_DIP051A7212; relay-DR-1  
+| K3         HALL        ;             
+| K6         VFD_2       ;             
+| P1         LED_BOTTOM  ;             
+| P2         LED_MIDDLE  ;             
+| P3         LED_TOP     ;             
+| P4         PROGRAM_BUTTON;             
+| P5         USB_UART    ;             
+| P6         up_button   ;             
+| P7         down_button ;             
+| P9         VFD_1       ;             
+| P10        12AC        ;             
+| P11        240V        ;             
+| P12        MCU_MODE    ;             
+| P13        RLY_ON      ;             
+| Q3         MOSFET_N    ;             
+| R1         R           ;             
+| R2         R           ;             
+| R3         R           ;             
+| R4         R           ;             
+| R5         R           ;             
+| R6         R           ;             
+| R7         1k          ;             
+| R10        R           ;             
+| RL1        94.14.0     ; relay_finder-94.14.0
+| S1         DTSM-6      ; switch-tact-DTSM-6
+| S2         DPTT        ; ~           
+| T1         TRANSFO     ;             
+| U1         7805        ;             
+| U2         OPTO-TRANSISTOR_4_PIN;             
+| U3         OPTO-TRANSISTOR_4_PIN;             
+| X1         16MHz       ;             
+#End Cmp
+
+#Cmp ( order = Value )
+| 18pF         C3        ;             
+| 18pF         C7        ;             
+| C            C1        ;             
+| C            C2        ;             
+| C            C4        ;             
+| C            C5        ;             
+| C            C6        ;             
+| C            C8        ;             
+| CAPAPOL      C9        ;             
+| CAPAPOL      C10       ;             
+| AVR-ISP-6    CON1      ; AVR-ISP-6   
+| BRIDGE       D1        ;             
+| DIODE        D2        ;             
+| POWER_ON     D3        ;             
+| ATMEGA8-AI   IC1       ; TQFP32      
+| HALL         K3        ;             
+| VFD_2        K6        ;             
+| MEDER_DIP051A7212 K2        ; relay-DR-1  
+| LED_BOTTOM   P1        ;             
+| LED_MIDDLE   P2        ;             
+| LED_TOP      P3        ;             
+| PROGRAM_BUTTON P4        ;             
+| USB_UART     P5        ;             
+| up_button    P6        ;             
+| down_button  P7        ;             
+| VFD_1        P9        ;             
+| 12AC         P10       ;             
+| 240V         P11       ;             
+| MCU_MODE     P12       ;             
+| RLY_ON       P13       ;             
+| MOSFET_N     Q3        ;             
+| 1k           R7        ;             
+| R            R1        ;             
+| R            R2        ;             
+| R            R3        ;             
+| R            R4        ;             
+| R            R5        ;             
+| R            R6        ;             
+| R            R10       ;             
+| 94.14.0      RL1       ; relay_finder-94.14.0
+| DTSM-6       S1        ; switch-tact-DTSM-6
+| DPTT         S2        ; ~           
+| TRANSFO      T1        ;             
+| 7805         U1        ;             
+| OPTO-TRANSISTOR_4_PIN U2        ;             
+| OPTO-TRANSISTOR_4_PIN U3        ;             
+| 16MHz        X1        ;             
+#End Cmp
+
+#End List
