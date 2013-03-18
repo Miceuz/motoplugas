@@ -9,15 +9,15 @@
 
 DEVICE  = atmega8
 F_CPU   = 16000000	# in Hz
-FUSE_L  = 0xCE# see below for fuse values for particular devices
+FUSE_L  = 0x0E# see below for fuse values for particular devices
 FUSE_H  = 0xD1
 AVRDUDE = avrdude -c usbasp -P usb -p $(DEVICE) # edit this line for your programmer
 
 CFLAGS  = -I. -DDEBUG_LEVEL=0 -Os --std=c99
-CFLAGS += -ffunction-sections -fdata-sections
+CFLAGS += -ffunction-sections -fdata-sections #-finline-functions
 LDFLAGS += -Wl,--gc-sections,--relax
 
-OBJECTS = main.o
+OBJECTS = main.o debounce.o
 
 COMPILE = avr-gcc -DF_CPU=$(F_CPU) $(CFLAGS) $(LDFLAGS) -mmcu=$(DEVICE)  
 

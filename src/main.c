@@ -5,19 +5,24 @@
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 #include <avr/sleep.h>
+#include <avr/eeprom.h>
+#include "debounce.h"
+
 
 #define UP_BUTTON PB0
 #define DOWN_BUTTON PB1
+#define PROGRAM_BUTTON PC2
 
 #define LED_MID PC0
 #define LED_TOP PC1
-#define PROGRAM_BUTTON PC2
-#define MODE_SENSE PC3
 #define LED_BOT PC4
 
 #define POS_BOT LED_BOT
 #define POS_MID LED_MID
 #define POS_TOP LED_TOP
+
+#define MODE_TUMBLER PC3
+#define MODE_PULL_DOWN PC5
 
 #define HALL_SENSE PD2
 #define SPEED_SELECT PD5
@@ -28,24 +33,21 @@
 
 #define MODE_PROGRAM 1
 #define MODE_RUN 2
+#define MODE_MANUAL 3
 
 #define BLINK_SLOW 10
 #define BLINK_FAST 5
 
+#define DIRECTION_UP 1
+#define DIRECTION_DOWN 2
 
-typedef struct {
-    uint8_t pinBuffer;
-    uint8_t pressed;
-    uint8_t lastState;
-} button_t;
-
-volatile button_t progModeButton = {0xFF, FALSE, FALSE};
-volatile button_t programButton = {0xFF, FALSE, FALSE};
-volatile button_t upButton = {0xFF, FALSE, FALSE};
-volatile button_t downButton = {0xFF, FALSE, FALSE};
+volatile switch_t progModeTumbler = {0xFF, FALSE, FALSE};
+volatile switch_t programButton = {0xFF, FALSE, FALSE};
+volatile switch_t upButton = {0xFF, FALSE, FALSE};
+volatile switch_t downButton = {0xFF, FALSE, FALSE};
 
 volatile int32_t clicks = 0;
-volatile uint8_t mode = MODE_RUN;
+volatile uint8_t mode = 0;
 volatile uint8_t block = FALSE;
 
 volatile uint8_t nextPosition = POS_BOT;
@@ -53,7 +55,17 @@ volatile uint8_t currPosition = POS_TOP;
 volatile uint8_t blinkRate = BLINK_SLOW;
 volatile uint8_t blinkCounter = BLINK_SLOW;
 
-inline void setupGPIO() {
+volatile uint8_t lastDirection = 0;
+
+uint8_t modePullState = 0;
+uint8_t stateOnPullDown = 0x0E;
+uint8_t stateOnPullUp = 0x0E;
+uint8_t lastTumblerState = 0;
+
+uint8_t middlePositionTimeout = FALSE;
+int32_t topThreshold, middleThreshold, bottomThreshold, currThreshold;
+
+static inline void setupGPIO() {
     DDRC |= _BV(LED_MID) | _BV(LED_TOP) | _BV(LED_BOT);
     PORTC &= ~(_BV(LED_MID) | _BV(LED_TOP) | _BV(LED_BOT));
     
@@ -63,58 +75,92 @@ inline void setupGPIO() {
     DDRB &= ~(_BV(UP_BUTTON) | _BV(DOWN_BUTTON));
     PORTB |= _BV(UP_BUTTON) | _BV(DOWN_BUTTON);
     
-    DDRC &= ~(_BV(PROGRAM_BUTTON) | _BV(MODE_SENSE));
-    PORTC |= _BV(PROGRAM_BUTTON) | _BV(MODE_SENSE);
+    DDRC |= _BV(MODE_PULL_DOWN);
+    PORTC &= ~_BV(MODE_PULL_DOWN);
+    
+    DDRC &= ~(_BV(PROGRAM_BUTTON) | _BV(MODE_TUMBLER));
+    PORTC |= _BV(PROGRAM_BUTTON) | _BV(MODE_TUMBLER);
+    
+    modePullState = 1;
     
     DDRD &= ~(_BV(HALL_SENSE));
     PORTD |= _BV(HALL_SENSE);
 }
 
-inline void ledOn(uint8_t led) {
+static inline void speedFull() {
+    PORTD |= _BV(SPEED_SELECT);
+}
+
+static inline void speedSlow() {
+    PORTD &= ~_BV(SPEED_SELECT);
+}
+
+static inline void ledOn(uint8_t led) {
     PORTC |= _BV(led);
 }
 
-inline void ledOff(uint8_t led) {
+static inline void ledOff(uint8_t led) {
     PORTC &= ~_BV(led);
 }
 
-inline void toggleLed(uint8_t led) {
+static inline void toggleLed(uint8_t led) {
     PORTC ^= _BV(led);
 }
 
-inline void allLedsOff() {
+static inline void blinkHello() {
+    ledOn(LED_TOP);
+    _delay_ms(200);
+    ledOff(LED_TOP);
+    ledOn(LED_MID);
+    _delay_ms(200);
+    ledOff(LED_MID);
+    ledOn(LED_BOT);
+    _delay_ms(200);
+    ledOff(LED_BOT);
+}
+
+static inline void allLedsOff() {
     ledOff(LED_TOP);
     ledOff(LED_MID);
     ledOff(LED_BOT);
 }
 
-inline void closeSwitch(uint8_t sw) {
+static inline void modePullDown(){
+    PORTC &= ~_BV(MODE_TUMBLER);    //turn off internal pull-up
+    PORTC |= _BV(MODE_PULL_DOWN);   //turn on external pull-down
+    modePullState = 0;
+}
+
+static inline void modePullUp(){
+    PORTC &= ~_BV(MODE_PULL_DOWN);  //turn off external pull-down
+    PORTC |= _BV(MODE_TUMBLER);     //turn on internal pull-up
+    modePullState = 1;
+}
+
+static inline void closeSwitch(uint8_t sw) {
     PORTD |= _BV(sw);
 }
 
-inline void openSwitch(uint8_t sw) {
+static inline void openSwitch(uint8_t sw) {
     PORTD &= ~_BV(sw);
 }
 
-inline void startBlockTimeout() {
+static inline void startBlockTimeout() {
     block=TRUE;
     TIMSK |= _BV(TOIE1);
-    TCCR1B |= _BV(CS12) | _BV(CS10);
+    TCCR1B |= _BV(CS12) ;
 }
 
-
-uint8_t middlePositionTimeout = FALSE;
-int32_t topThreshold, middleThreshold, bottomThreshold, currThreshold;
-
-inline void startMiddlePositionTimeout() {
+static inline void startMiddlePositionTimeout() {
     middlePositionTimeout=TRUE;
     TIMSK |= _BV(TOIE1);
     TCCR1B |= _BV(CS12) | _BV(CS10);
     ledOff(LED_BOT);
 }
 
-inline void stopMiddlePositionTimeout() {
+void stopMiddlePositionTimeout() {
     TCCR1B = 0;
+    middlePositionTimeout = FALSE;
 }
 
 uint8_t getNextPosition() {
@@ -128,18 +174,132 @@ uint8_t getNextPosition() {
 }
 
 void setUpNextPosition() {
-    if(POS_BOT == nextPosition) {
-        currThreshold = middleThreshold;
-    } else if(POS_MID == nextPosition) {
-        currThreshold = topThreshold;
-    } else if(POS_TOP == nextPosition) {
-        currThreshold = bottomThreshold;
-    }
     ledOff(currPosition);
     currPosition = nextPosition;
     ledOn(currPosition);
     nextPosition = getNextPosition();
+
+    if(POS_BOT == nextPosition) {
+        currThreshold = bottomThreshold;
+        speedFull();
+    } else if(POS_MID == nextPosition) {
+        currThreshold = middleThreshold;
+        speedSlow();
+    } else if(POS_TOP == nextPosition) {
+        currThreshold = topThreshold;
+        speedFull();
+    }
 }
+
+static inline uint8_t canGoUp() {
+    return MODE_MANUAL == mode ||
+    	   MODE_PROGRAM == mode ||
+    	   (MODE_RUN == mode && (POS_MID == currPosition || POS_BOT == currPosition));
+}
+
+static inline uint8_t isGoingBelowPreviousThreshold() {
+    return downButton.pressed &&
+    ((POS_MID == nextPosition && clicks <= bottomThreshold) ||
+     (POS_TOP == nextPosition && clicks <= middleThreshold));
+}
+
+static inline uint8_t canGoDown() {
+    return MODE_MANUAL == mode || MODE_PROGRAM == mode || (MODE_RUN == mode && (POS_MID == currPosition || POS_TOP == currPosition));
+}
+
+void onUpButtonPressed() {
+    if(canGoUp()) {
+        lastDirection = DIRECTION_UP;
+        closeSwitch(UP_SWITCH);
+        blinkRate = BLINK_FAST;
+    }
+}
+
+void onUpButtonReleased() {
+    openSwitch(UP_SWITCH);
+    blinkRate = BLINK_SLOW;
+}
+
+void onDownButtonPressed() {
+    if(canGoDown()) {
+        lastDirection = DIRECTION_DOWN;
+        closeSwitch(DOWN_SWITCH);
+        blinkRate = BLINK_FAST;
+    }
+}
+
+void onDownButtonReleased() {
+    openSwitch(DOWN_SWITCH);
+    blinkRate = BLINK_SLOW;
+}
+
+void onProgramButtonPressed() {
+    if(MODE_PROGRAM == mode) {
+        ATOMIC_BLOCK(ATOMIC_FORCEON) {
+            currPosition = nextPosition;
+            nextPosition = getNextPosition();
+
+            ledOff(currPosition);
+            if(POS_BOT == currPosition) {
+                bottomThreshold = 0;
+                clicks = 0;
+            } else if(POS_MID == currPosition) {
+                middleThreshold = (clicks > bottomThreshold) ? clicks : bottomThreshold;
+                eeprom_write_dword((uint32_t*) 0, middleThreshold);
+            } else if(POS_TOP == currPosition) {
+            	topThreshold = (clicks > middleThreshold) ? clicks : middleThreshold;
+                eeprom_write_dword((uint32_t*) 4, topThreshold);
+                block = TRUE;
+            }
+        }
+    }
+}
+
+static inline void changeMode(uint8_t newMode) {
+    allLedsOff();
+    stopMiddlePositionTimeout();
+    
+    if(MODE_RUN == newMode) {
+//        currPosition = POS_TOP;
+//        nextPosition = POS_BOT;
+        ledOn(currPosition);
+        currThreshold = bottomThreshold;
+        block = FALSE;
+    } else if (MODE_PROGRAM == newMode) {
+    	if(POS_TOP == nextPosition) {
+    		currPosition = POS_BOT;
+    		nextPosition = POS_MID;
+    	}
+    }
+    mode = newMode;
+}
+
+static inline void serviceTumbler(volatile switch_t *tumbler) {
+    uint8_t newMode = 0;
+
+    if(0xFF == tumbler->pinBuffer || 0x00 == tumbler->pinBuffer) {
+        if(0 == modePullState) {
+            stateOnPullDown = tumbler->pinBuffer;
+            tumbler->pinBuffer=1;//supysam buferį, kad deboucerio interruptas turėtų ką veikt ir nekviestume serviceTmbler, kol neapspęsta nauja būsena
+            modePullUp();
+        } else if(1 == modePullState) {
+            stateOnPullUp = tumbler->pinBuffer;
+            tumbler->pinBuffer=1;
+            modePullDown();
+        }
+
+        if(stateOnPullUp == 0xFF && stateOnPullDown == 0x00) {
+            newMode = MODE_RUN;
+        } else if(stateOnPullUp == 0x00 && stateOnPullDown == 0x00) {
+            newMode = MODE_PROGRAM;
+        } else if(stateOnPullUp == 0xFF && stateOnPullDown == 0xFF) {
+            newMode = MODE_MANUAL;
+        }
+        if(mode != newMode) {
+            changeMode(newMode);
+        }
+    }
+} 
 
 /*
     Timer1 overflow interrupt releases buttons to user
@@ -155,14 +315,15 @@ ISR(TIMER1_OVF_vect) {
     TCCR1B = 0;
 }
 
-
-void debounce(volatile button_t *button, volatile uint8_t *port, volatile uint8_t pin){
-    button->pinBuffer = (button->pinBuffer) << 1;
-    button->pinBuffer |= ((*(port) & _BV(pin)) != 0);
-    if(0 == button->pinBuffer) {
-        button->pressed = TRUE;
-    } else if(0xFF == button->pinBuffer){
-        button->pressed = FALSE;
+/*
+    External interrupt gets executed on magnet pass over the Hall sensor
+ */
+ISR(INT0_vect) {
+    if(DIRECTION_UP == lastDirection) {
+        clicks++;
+    }
+    if(DIRECTION_DOWN == lastDirection) {
+        clicks--;
     }
 }
 
@@ -170,9 +331,8 @@ void debounce(volatile button_t *button, volatile uint8_t *port, volatile uint8_
     Timer0 overflow interrupt takes care of button debouncing and led blinking
  */
 ISR(TIMER0_OVF_vect) {
-//    sei(); //allow Hall sensor interrupts inside as they are rather important
-    debounce(&progModeButton, &PINC, MODE_SENSE);
-        
+    debounce(&progModeTumbler, &PINC, MODE_TUMBLER);
+
     if(!downButton.pressed) {
         debounce(&upButton, &PINB, UP_BUTTON);
     }
@@ -180,126 +340,18 @@ ISR(TIMER0_OVF_vect) {
     if(!upButton.pressed) {
         debounce(&downButton, &PINB, DOWN_BUTTON);
     }
-        
+
     if(!upButton.pressed && !downButton.pressed) {
         debounce(&programButton, &PINC, PROGRAM_BUTTON);
     }
-    
+
     if((MODE_PROGRAM == mode || MODE_RUN == mode) && !block) {
         if(0 == blinkCounter--) {
             toggleLed(nextPosition);
             blinkCounter = blinkRate;
         }
-    }            
-
-}
-
-
-/*
-    External interrupt gets executed on magnet pass over the Hall sensor
- */
-ISR(INT0_vect) {
-    if(upButton.pressed) {
-        clicks++;
     }
-    if(downButton.pressed) {
-        clicks--;
-    }
-}
 
-inline void blinkHello() {
-    ledOn(LED_TOP);
-    _delay_ms(200);
-    ledOff(LED_TOP);
-    ledOn(LED_MID);
-    _delay_ms(200);
-    ledOff(LED_MID);
-    ledOn(LED_BOT);
-    _delay_ms(200);
-    ledOff(LED_BOT);
-    
-}
-
-inline uint8_t canGoUp() {
-    return MODE_PROGRAM == mode || (MODE_RUN == mode && (POS_MID == currPosition || POS_BOT == currPosition));
-}
-
-void onUpButtonPressed() {
-    if(canGoUp()) {
-        closeSwitch(UP_SWITCH);
-        blinkRate = BLINK_FAST;
-    }
-}
-
-void onUpButtonReleased() {
-    openSwitch(UP_SWITCH);
-    blinkRate = BLINK_SLOW;
-}
-
-inline uint8_t canGoDown() {
-    return MODE_PROGRAM == mode || (MODE_RUN == mode && (POS_MID == currPosition || POS_TOP == currPosition));
-}
-
-void onDownButtonPressed() {
-    if(canGoDown()) {
-        closeSwitch(DOWN_SWITCH);
-        blinkRate = BLINK_FAST;
-    }
-}
-
-void onDownButtonReleased() {
-    openSwitch(DOWN_SWITCH);
-    blinkRate = BLINK_SLOW;
-}
-
-void onProgramButtonPressed() {
-    if(MODE_PROGRAM == mode) {
-        ATOMIC_BLOCK(ATOMIC_FORCEON)
-        {
-            ledOff(nextPosition);
-            if(POS_BOT == nextPosition) {
-                bottomThreshold = 0;
-                clicks = 0;
-            } else if(POS_MID == nextPosition) {
-                middleThreshold = clicks;
-            } else if(POS_TOP == nextPosition) {
-                topThreshold = clicks;
-                block = TRUE;
-            }
-            currPosition = nextPosition;
-            nextPosition = getNextPosition();
-        }
-    }
-}
-
-void onProgModePressed() {
-    allLedsOff();
-    mode = MODE_PROGRAM;
-}
-
-void onProgModeReleased() {
-    ledOff(nextPosition);
-    currPosition = POS_TOP;
-    nextPosition = POS_BOT;
-    ledOn(currPosition);
-    currThreshold = bottomThreshold;
-    mode = MODE_RUN;
-    block = FALSE;
-}
-
-void serviceButton(volatile button_t *button, void (*onPressed)(void), void (*onReleased)(void)) {
-    if(button->pressed != button->lastState) {
-        if(button->pressed) {
-            if(0 != onPressed) {
-                onPressed();
-            }
-        } else {
-            if(0 != onReleased) {
-                onReleased();
-            }
-        }
-        button->lastState = button->pressed;
-    }
 }
 
 int main (void) {
@@ -312,11 +364,16 @@ int main (void) {
     MCUCR |= _BV(ISC01); //falling edge
     GICR |= _BV(INT0); //int0 external interrupt enable
 
+    middleThreshold = (int32_t) eeprom_read_dword((uint32_t*) 0);
+    topThreshold = (int32_t) eeprom_read_dword((uint32_t*) 4);
+    clicks = topThreshold;
+    speedFull();
+    
     sei();
     ledOn(currPosition);
     
     while(1){
-        serviceButton(&progModeButton, onProgModePressed, onProgModeReleased);
+        serviceTumbler(&progModeTumbler);
         if(MODE_PROGRAM == mode) {
             serviceButton(&programButton, onProgramButtonPressed, 0);
         }
@@ -329,24 +386,31 @@ int main (void) {
                 if(upButton.pressed) {
                     ATOMIC_BLOCK(ATOMIC_FORCEON) 
                     {
+                        stopMiddlePositionTimeout();
                         if((POS_MID == nextPosition && clicks >= middleThreshold) || (POS_TOP == nextPosition && clicks >= topThreshold)) {
                             startBlockTimeout();
+                            blinkRate = BLINK_SLOW;
+                            openSwitch(UP_SWITCH);
                             setUpNextPosition();
-                        } else {
-                            stopMiddlePositionTimeout();
                         }
                     }
                 } else if(downButton.pressed) {
                     ATOMIC_BLOCK(ATOMIC_FORCEON) {
+                        stopMiddlePositionTimeout();
                         if(POS_BOT == nextPosition && clicks <= bottomThreshold) {
                             startBlockTimeout();
+                            blinkRate = BLINK_SLOW;
+                            openSwitch(DOWN_SWITCH);
                             setUpNextPosition();
-                        } else {
-                            stopMiddlePositionTimeout();
                         }
                     }
                 } else if(POS_MID == nextPosition && clicks >= middleThreshold - 10) {
                     startMiddlePositionTimeout();
+                }
+            } else if(MODE_PROGRAM == mode) {
+                if(isGoingBelowPreviousThreshold()) {
+                    openSwitch(UP_SWITCH);
+                    openSwitch(DOWN_SWITCH);
                 }
             }
         } else {
