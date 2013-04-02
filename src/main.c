@@ -265,11 +265,19 @@ static inline void changeMode(uint8_t newMode) {
         ledOn(currPosition);
         currThreshold = bottomThreshold;
         block = FALSE;
+        if(POS_TOP == currPosition || POS_MID == currPosition) {
+        	speedFull();
+        } else {
+        	speedSlow();
+        }
     } else if (MODE_PROGRAM == newMode) {
+    	speedSlow();
     	if(POS_TOP == nextPosition) {
     		currPosition = POS_BOT;
     		nextPosition = POS_MID;
     	}
+    } else if(MODE_MANUAL == newMode) {
+    	speedSlow();
     }
     mode = newMode;
 }
@@ -367,7 +375,7 @@ int main (void) {
     middleThreshold = (int32_t) eeprom_read_dword((uint32_t*) 0);
     topThreshold = (int32_t) eeprom_read_dword((uint32_t*) 4);
     clicks = topThreshold;
-    speedFull();
+    speedSlow();
     
     sei();
     ledOn(currPosition);
