@@ -9,8 +9,8 @@
 #include "debounce.h"
 
 
-#define UP_BUTTON PB0
-#define DOWN_BUTTON PB1
+#define UP_BUTTON PB1
+#define DOWN_BUTTON PB0
 #define PROGRAM_BUTTON PC2
 
 #define LED_MID PC0
@@ -63,7 +63,7 @@ uint8_t stateOnPullUp = 0x0E;
 uint8_t lastTumblerState = 0;
 
 uint8_t middlePositionTimeout = FALSE;
-int32_t topThreshold, middleThreshold, bottomThreshold, currThreshold;
+volatile int32_t topThreshold, middleThreshold, bottomThreshold, currThreshold;
 
 static inline void setupGPIO() {
     DDRC |= _BV(LED_MID) | _BV(LED_TOP) | _BV(LED_BOT);
@@ -323,6 +323,11 @@ ISR(TIMER1_OVF_vect) {
     TCCR1B = 0;
 }
 
+
+uint8_t clicksOverMiddleThreshold = 0;
+uint8_t clicksOverTopThreshold = 0;
+uint8_t clicksBelowBottomThreshold = 0;
+
 /*
     External interrupt gets executed on magnet pass over the Hall sensor
  */
@@ -333,12 +338,16 @@ ISR(INT0_vect) {
     if(DIRECTION_DOWN == lastDirection) {
         clicks--;
     }
+    clicksOverMiddleThreshold = (clicks >= middleThreshold);
+    clicksOverTopThreshold = (clicks >= topThreshold);
+    clicksBelowBottomThreshold = (clicks <= 0);
 }
 
 /*
     Timer0 overflow interrupt takes care of button debouncing and led blinking
  */
 ISR(TIMER0_OVF_vect) {
+	sei();
     debounce(&progModeTumbler, &PINC, MODE_TUMBLER);
 
     if(!downButton.pressed) {
@@ -392,28 +401,21 @@ int main (void) {
             
             if(MODE_RUN == mode) {
                 if(upButton.pressed) {
-                    ATOMIC_BLOCK(ATOMIC_FORCEON) 
-                    {
-                        stopMiddlePositionTimeout();
-                        if((POS_MID == nextPosition && clicks >= middleThreshold) || (POS_TOP == nextPosition && clicks >= topThreshold)) {
-                            startBlockTimeout();
-                            blinkRate = BLINK_SLOW;
-                            openSwitch(UP_SWITCH);
-                            setUpNextPosition();
-                        }
-                    }
+                    stopMiddlePositionTimeout();
+					if((POS_MID == nextPosition && clicksOverMiddleThreshold) || (POS_TOP == nextPosition && clicksOverTopThreshold)) {
+						openSwitch(UP_SWITCH);
+						startBlockTimeout();
+						blinkRate = BLINK_SLOW;
+						setUpNextPosition();
+					}
                 } else if(downButton.pressed) {
-                    ATOMIC_BLOCK(ATOMIC_FORCEON) {
-                        stopMiddlePositionTimeout();
-                        if(POS_BOT == nextPosition && clicks <= bottomThreshold) {
-                            startBlockTimeout();
-                            blinkRate = BLINK_SLOW;
-                            openSwitch(DOWN_SWITCH);
-                            setUpNextPosition();
-                        }
-                    }
-                } else if(POS_MID == nextPosition && clicks >= middleThreshold - 10) {
-                    startMiddlePositionTimeout();
+                    stopMiddlePositionTimeout();
+					if(POS_BOT == nextPosition && clicksBelowBottomThreshold) {
+						openSwitch(DOWN_SWITCH);
+						startBlockTimeout();
+						blinkRate = BLINK_SLOW;
+						setUpNextPosition();
+					}
                 }
             } else if(MODE_PROGRAM == mode) {
                 if(isGoingBelowPreviousThreshold()) {
