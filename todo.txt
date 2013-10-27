@@ -1,9 +1,0 @@
-* greičio relės footprintas
-* diodų tilto footprintas
-* usarto pinoutas
-* optronų pinoutas
-* 240V konektorius
-* mygtuko footprintas
-* power led
-* 1 holo sensorius
-* skylės
